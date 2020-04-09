@@ -12,7 +12,8 @@ What happens when we need to know specifically whether we have a `Fish`?
 A common idiom in JavaScript to differentiate between two possible values is to check for the presence of a member.
 As we mentioned, you can only access members that are guaranteed to be in all the constituents of a union type.
 
-```ts
+```ts twoslash
+// @errors: 2304
 let pet = getSmallPet();
 
 // Each of these property accesses will cause an error
@@ -25,7 +26,8 @@ if (pet.swim) {
 
 To get the same code working, we'll need to use a type assertion:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304 2304
 let pet = getSmallPet();
 
 if ((pet as Fish).swim) {
@@ -47,7 +49,8 @@ A type guard is some expression that performs a runtime check that guarantees th
 
 To define a type guard, we simply need to define a function whose return type is a _type predicate_:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304
 function isFish(pet: Fish | Bird): pet is Fish {
   return (pet as Fish).swim !== undefined;
 }
@@ -58,7 +61,8 @@ A predicate takes the form `parameterName is Type`, where `parameterName` must b
 
 Any time `isFish` is called with some variable, TypeScript will _narrow_ that variable to that specific type if the original type is compatible.
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304
 // Both calls to 'swim' and 'fly' are now okay.
 
 if (isFish(pet)) {
@@ -77,7 +81,8 @@ The `in` operator now acts as a narrowing expression for types.
 
 For a `n in x` expression, where `n` is a string literal or string literal type and `x` is a union type, the "true" branch narrows to types which have an optional or required property `n`, and the "false" branch narrows to types which have an optional or missing property `n`.
 
-```ts
+```ts twoslash
+// @errors: 2304 2304
 function move(pet: Fish | Bird) {
   if ("swim" in pet) {
     return pet.swim();
@@ -91,7 +96,7 @@ function move(pet: Fish | Bird) {
 Let's go back and write the code for the version of `padLeft` that uses union types.
 We could write it with type predicates as follows:
 
-```ts
+```ts twoslash
 function isNumber(x: any): x is number {
   return typeof x === "number";
 }
@@ -115,7 +120,7 @@ However, having to define a function to figure out if a type is a primitive is k
 Luckily, you don't need to abstract `typeof x === "number"` into its own function because TypeScript will recognize it as a type guard on its own.
 That means we could just write these checks inline.
 
-```ts
+```ts twoslash
 function padLeft(value: string, padding: string | number) {
   if (typeof padding === "number") {
     return Array(padding + 1).join(" ") + value;
@@ -137,7 +142,7 @@ If you've read about `typeof` type guards and are familiar with the `instanceof`
 _`instanceof` type guards_ are a way of narrowing types using their constructor function.
 For instance, let's borrow our industrial string-padder example from earlier:
 
-```ts
+```ts twoslash
 interface Padder {
   getPaddingString(): string;
 }
@@ -192,7 +197,8 @@ The inventor of `null`, Tony Hoare, calls this his ["billion dollar mistake"](ht
 The `--strictNullChecks` flag fixes this: when you declare a variable, it doesn't automatically include `null` or `undefined`.
 You can include them explicitly using a union type:
 
-```ts
+```ts twoslash
+// @errors: 2322 2322
 let s = "foo";
 s = null; // error, 'null' is not assignable to 'string'
 let sn: string | null = "bar";
@@ -210,7 +216,8 @@ From TypeScript 3.7 and onwards, you can use [optional chaining](/docs/handbook/
 
 With `--strictNullChecks`, an optional parameter automatically adds `| undefined`:
 
-```ts
+```ts twoslash
+// @errors: 2345
 function f(x: number, y?: number) {
   return x + (y || 0);
 }
@@ -222,7 +229,8 @@ f(1, null); // error, 'null' is not assignable to 'number | undefined'
 
 The same is true for optional properties:
 
-```ts
+```ts twoslash
+// @errors: 2564 2322 2322
 class C {
   a: number;
   b?: number;
@@ -240,7 +248,7 @@ c.b = null; // error, 'null' is not assignable to 'number | undefined'
 Since nullable types are implemented with a union, you need to use a type guard to get rid of the `null`.
 Fortunately, this is the same code you'd write in JavaScript:
 
-```ts
+```ts twoslash
 function f(sn: string | null): string {
   if (sn == null) {
     return "default";
@@ -252,7 +260,7 @@ function f(sn: string | null): string {
 
 The `null` elimination is pretty obvious here, but you can use terser operators too:
 
-```ts
+```ts twoslash
 function f(sn: string | null): string {
   return sn || "default";
 }
@@ -261,7 +269,8 @@ function f(sn: string | null): string {
 In cases where the compiler can't eliminate `null` or `undefined`, you can use the type assertion operator to manually remove them.
 The syntax is postfix `!`: `identifier!` removes `null` and `undefined` from the type of `identifier`:
 
-```ts
+```ts twoslash
+// @errors: 2531
 function broken(name: string | null): string {
   function postfix(epithet: string) {
     return name.charAt(0) + ".  the " + epithet; // error, 'name' is possibly null
@@ -288,7 +297,7 @@ Without knowing where the function is called, it can't know what the type of `na
 Type aliases create a new name for a type.
 Type aliases are sometimes similar to interfaces, but can name primitives, unions, tuples, and any other types that you'd otherwise have to write by hand.
 
-```ts
+```ts twoslash
 type Name = string;
 type NameResolver = () => string;
 type NameOrResolver = Name | NameResolver;
@@ -306,13 +315,13 @@ Aliasing a primitive is not terribly useful, though it can be used as a form of 
 
 Just like interfaces, type aliases can also be generic - we can just add type parameters and use them on the right side of the alias declaration:
 
-```ts
+```ts twoslash
 type Container<T> = { value: T };
 ```
 
 We can also have a type alias refer to itself in a property:
 
-```ts
+```ts twoslash
 type Tree<T> = {
   value: T;
   left: Tree<T>;
@@ -322,7 +331,8 @@ type Tree<T> = {
 
 Together with intersection types, we can make some pretty mind-bending types:
 
-```ts
+```ts twoslash
+// @errors: 2454 2454 2454 2454
 type LinkedList<T> = T & { next: LinkedList<T> };
 
 interface Person {
@@ -338,7 +348,7 @@ var s = people.next.next.next.name;
 
 However, it's not possible for a type alias to appear anywhere else on the right side of the declaration:
 
-```ts
+```ts twoslash
 type Yikes = Array<Yikes>; // error
 ```
 
@@ -350,7 +360,7 @@ One difference is that interfaces create a new name that is used everywhere.
 Type aliases don't create a new name &mdash; for instance, error messages won't use the alias name.
 In the code below, hovering over `interfaced` in an editor will show that it returns an `Interface`, but will show that `aliased` returns object literal type.
 
-```ts
+```ts twoslash
 type Alias = { num: number };
 interface Interface {
   num: number;
@@ -371,7 +381,8 @@ String literal types allow you to specify the exact value a string must have.
 In practice string literal types combine nicely with union types, type guards, and type aliases.
 You can use these features together to get enum-like behavior with strings.
 
-```ts
+```ts twoslash
+// @errors: 2345
 type Easing = "ease-in" | "ease-out" | "ease-in-out";
 class UIElement {
   animate(dx: number, dy: number, easing: Easing) {
@@ -398,7 +409,8 @@ Argument of type '"uneasy"' is not assignable to parameter of type '"ease-in" | 
 
 String literal types can be used in the same way to distinguish overloads:
 
-```ts
+```ts twoslash
+// @errors: 2355
 function createElement(tagName: "img"): HTMLImageElement;
 function createElement(tagName: "input"): HTMLInputElement;
 // ... more overloads ...
@@ -411,7 +423,8 @@ function createElement(tagName: string): Element {
 
 TypeScript also has numeric literal types.
 
-```ts
+```ts twoslash
+// @errors: 2355
 function rollDice(): 1 | 2 | 3 | 4 | 5 | 6 {
   // ...
 }
@@ -419,7 +432,8 @@ function rollDice(): 1 | 2 | 3 | 4 | 5 | 6 {
 
 These are seldom written explicitly, but they can be useful when narrowing issues and can catch bugs:
 
-```ts
+```ts twoslash
+// @errors: 2367
 function foo(x: number) {
   if (x !== 1 || x !== 2) {
     //         ~~~~~~~
@@ -447,7 +461,7 @@ There are three ingredients:
 2. A type alias that takes the union of those types &mdash; the _union_.
 3. Type guards on the common property.
 
-```ts
+```ts twoslash
 interface Square {
   kind: "square";
   size: number;
@@ -470,13 +484,15 @@ The other properties are specific to each interface.
 Notice that the interfaces are currently unrelated.
 Let's put them into a union:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304
 type Shape = Square | Rectangle | Circle;
 ```
 
 Now let's use the discriminated union:
 
-```ts
+```ts twoslash
+// @errors: 2304
 function area(s: Shape) {
   switch (s.kind) {
     case "square":
@@ -494,7 +510,8 @@ function area(s: Shape) {
 We would like the compiler to tell us when we don't cover all variants of the discriminated union.
 For example, if we add `Triangle` to `Shape`, we need to update `area` as well:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304
 type Shape = Square | Rectangle | Circle | Triangle;
 function area(s: Shape) {
   switch (s.kind) {
@@ -512,7 +529,8 @@ function area(s: Shape) {
 There are two ways to do this.
 The first is to turn on `--strictNullChecks` and specify a return type:
 
-```ts
+```ts twoslash
+// @errors: 2304 2366
 function area(s: Shape): number {
   // error: returns number | undefined
   switch (s.kind) {
@@ -532,7 +550,8 @@ However, this method is quite subtle and, besides, `--strictNullChecks` does not
 
 The second method uses the `never` type that the compiler uses to check for exhaustiveness:
 
-```ts
+```ts twoslash
+// @errors: 2304 2345
 function assertNever(x: never): never {
   throw new Error("Unexpected object: " + x);
 }
@@ -561,7 +580,7 @@ This is called _F_-bounded polymorphism.
 This makes hierarchical fluent interfaces much easier to express, for example.
 Take a simple calculator that returns `this` after each operation:
 
-```ts
+```ts twoslash
 class BasicCalculator {
   public constructor(protected value: number = 0) {}
   public currentValue(): number {
@@ -578,15 +597,13 @@ class BasicCalculator {
   // ... other operations go here ...
 }
 
-let v = new BasicCalculator(2)
-  .multiply(5)
-  .add(1)
-  .currentValue();
+let v = new BasicCalculator(2).multiply(5).add(1).currentValue();
 ```
 
 Since the class uses `this` types, you can extend it and the new class can use the old methods with no changes.
 
-```ts
+```ts twoslash
+// @errors: 2304 2339 2339 2339
 class ScientificCalculator extends BasicCalculator {
   public constructor(value = 0) {
     super(value);
@@ -598,11 +615,7 @@ class ScientificCalculator extends BasicCalculator {
   // ... other operations go here ...
 }
 
-let v = new ScientificCalculator(2)
-  .multiply(5)
-  .sin()
-  .add(1)
-  .currentValue();
+let v = new ScientificCalculator(2).multiply(5).sin().add(1).currentValue();
 ```
 
 Without `this` types, `ScientificCalculator` would not have been able to extend `BasicCalculator` and keep the fluent interface.
@@ -616,15 +629,15 @@ For example, a common JavaScript pattern is to pick a subset of properties from 
 
 ```js
 function pluck(o, propertyNames) {
-  return propertyNames.map(n => o[n]);
+  return propertyNames.map((n) => o[n]);
 }
 ```
 
 Here's how you would write and use this function in TypeScript, using the **index type query** and **indexed access** operators:
 
-```ts
+```ts twoslash
 function pluck<T, K extends keyof T>(o: T, propertyNames: K[]): T[K][] {
-  return propertyNames.map(n => o[n]);
+  return propertyNames.map((n) => o[n]);
 }
 
 interface Car {
@@ -635,7 +648,7 @@ interface Car {
 let taxi: Car = {
   manufacturer: "Toyota",
   model: "Camry",
-  year: 2014
+  year: 2014,
 };
 
 // Manufacturer and model are both of type string,
@@ -653,7 +666,8 @@ First is `keyof T`, the **index type query operator**.
 For any type `T`, `keyof T` is the union of known, public property names of `T`.
 For example:
 
-```ts
+```ts twoslash
+// @errors: 2304
 let carProps: keyof Car; // the union of ('manufacturer' | 'model' | 'year')
 ```
 
@@ -662,7 +676,8 @@ The difference is that if you add another property to `Car`, say `ownersAddress:
 And you can use `keyof` in generic contexts like `pluck`, where you can't possibly know the property names ahead of time.
 That means the compiler will check that you pass the right set of property names to `pluck`:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 1161
 // error, 'unknown' is not in 'manufacturer' | 'model' | 'year'
 pluck(taxi, ['year', 'unknown']); /
 ```
@@ -674,7 +689,7 @@ However, just like index type queries, you can use `T[K]` in a generic context, 
 You just have to make sure that the type variable `K extends keyof T`.
 Here's another example with a function named `getProperty`.
 
-```ts
+```ts twoslash
 function getProperty<T, K extends keyof T>(o: T, propertyName: K): T[K] {
   return o[propertyName]; // o[propertyName] is of type T[K]
 }
@@ -683,7 +698,8 @@ function getProperty<T, K extends keyof T>(o: T, propertyName: K): T[K] {
 In `getProperty`, `o: T` and `propertyName: K`, so that means `o[propertyName]: T[K]`.
 Once you return the `T[K]` result, the compiler will instantiate the actual type of the key, so the return type of `getProperty` will vary according to which property you request.
 
-```ts
+```ts twoslash
+// @errors: 2451 2304 2304 2304 2304 2304 2304
 let name: string = getProperty(taxi, "manufacturer");
 let year: number = getProperty(taxi, "year");
 
@@ -699,7 +715,7 @@ If you have a type with a string index signature, `keyof T` will be `string | nu
 by using strings (`object['42'`]) or numbers (`object[42]`)).
 And `T[string]` is just the type of the index signature:
 
-```ts
+```ts twoslash
 interface Dictionary<T> {
   [key: string]: T;
 }
@@ -709,7 +725,8 @@ let value: Dictionary<number>["foo"]; // number
 
 If you have a type with a number index signature, `keyof T` will just be `number`.
 
-```ts
+```ts twoslash
+// @errors: 2451 2451 2339
 interface Dictionary<T> {
   [key: number]: T;
 }
@@ -722,7 +739,7 @@ let value: Dictionary<number>[42]; // number
 
 A common task is to take an existing type and make each of its properties optional:
 
-```ts
+```ts twoslash
 interface PersonPartial {
   name?: string;
   age?: number;
@@ -731,7 +748,7 @@ interface PersonPartial {
 
 Or we might want a readonly version:
 
-```ts
+```ts twoslash
 interface PersonReadonly {
   readonly name: string;
   readonly age: number;
@@ -743,7 +760,8 @@ In a mapped type, the new type transforms each property in the old type in the s
 For example, you can make all properties of a type `readonly` or optional.
 Here are a couple of examples:
 
-```ts
+```ts twoslash
+// @errors: 2300 2300
 type Readonly<T> = {
   readonly [P in keyof T]: T[P];
 };
@@ -754,7 +772,8 @@ type Partial<T> = {
 
 And to use it:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304
 type PersonPartial = Partial<Person>;
 type ReadonlyPerson = Readonly<Person>;
 ```
@@ -762,7 +781,8 @@ type ReadonlyPerson = Readonly<Person>;
 Note that this syntax describes a type rather than a member.
 If you want to add members, you can use an intersection type:
 
-```ts
+```ts twoslash
+// @errors: 2300 2300 2693 1005 1128
 // Use this:
 type PartialWithNewMember<T> = {
   [P in keyof T]?: T[P];
@@ -778,7 +798,7 @@ type PartialWithNewMember<T> = {
 
 Let's take a look at the simplest mapped type and its parts:
 
-```ts
+```ts twoslash
 type Keys = "option1" | "option2";
 type Flags = { [K in Keys]: boolean };
 ```
@@ -792,7 +812,7 @@ There are three parts:
 
 In this simple example, `Keys` is a hard-coded list of property names and the property type is always `boolean`, so this mapped type is equivalent to writing:
 
-```ts
+```ts twoslash
 type Flags = {
   option1: boolean;
   option2: boolean;
@@ -803,14 +823,16 @@ Real applications, however, look like `Readonly` or `Partial` above.
 They're based on some existing type, and they transform the properties in some way.
 That's where `keyof` and indexed access types come in:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304
 type NullablePerson = { [P in keyof Person]: Person[P] | null };
 type PartialPerson = { [P in keyof Person]?: Person[P] };
 ```
 
 But it's more useful to have a general version.
 
-```ts
+```ts twoslash
+// @errors: 2300
 type Nullable<T> = { [P in keyof T]: T[P] | null };
 type Partial<T> = { [P in keyof T]?: T[P] };
 ```
@@ -823,7 +845,8 @@ For example, if `Person.name` was readonly, `Partial<Person>.name` would be read
 
 Here's one more example, in which `T[P]` is wrapped in a `Proxy<T>` class:
 
-```ts
+```ts twoslash
+// @errors: 2355 2304
 type Proxy<T> = {
   get(): T;
   set(value: T): void;
@@ -839,7 +862,8 @@ let proxyProps = proxify(props);
 
 Note that `Readonly<T>` and `Partial<T>` are so useful, they are included in TypeScript's standard library along with `Pick` and `Record`:
 
-```ts
+```ts twoslash
+// @errors: 2300 2300
 type Pick<T, K extends keyof T> = {
   [P in K]: T[P];
 };
@@ -851,7 +875,7 @@ type Record<K extends keyof any, T> = {
 `Readonly`, `Partial` and `Pick` are homomorphic whereas `Record` is not.
 One clue that `Record` is not homomorphic is that it doesn't take an input type to copy properties from:
 
-```ts
+```ts twoslash
 type ThreeStringProps = Record<"prop1" | "prop2" | "prop3", string>;
 ```
 
@@ -862,7 +886,8 @@ Non-homomorphic types are essentially creating new properties, so they can't cop
 Now that you know how to wrap the properties of a type, the next thing you'll want to do is unwrap them.
 Fortunately, that's pretty easy:
 
-```ts
+```ts twoslash
+// @errors: 2304 7053 2304
 function unproxify<T>(t: Proxify<T>): T {
   let result = {} as T;
   for (const k in t) {
@@ -882,7 +907,8 @@ If the mapped type is not homomorphic you'll have to give an explicit type param
 TypeScript 2.8 introduces _conditional types_ which add the ability to express non-uniform type mappings.
 A conditional type selects one of two possible types based on a condition expressed as a type relationship test:
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304 2304 1005
 T extends U ? X : Y
 ```
 
@@ -893,7 +919,7 @@ When `T` or `U` contains type variables, whether to resolve to `X` or `Y`, or to
 
 As an example of some types that are immediately resolved, we can take a look at the following example:
 
-```ts
+```ts twoslash
 declare function f<T extends boolean>(x: T): T extends true ? string : number;
 
 // Type is 'string | number'
@@ -902,7 +928,7 @@ let x = f(Math.random() < 0.5);
 
 Another example would be the `TypeName` type alias, which uses nested conditional types:
 
-```ts
+```ts twoslash
 type TypeName<T> = T extends string
   ? "string"
   : T extends number
@@ -924,7 +950,7 @@ type T4 = TypeName<string[]>; // "object"
 
 But as an example of a place where conditional types are deferred - where they stick around instead of picking a branch - would be in the following:
 
-```ts
+```ts twoslash
 interface Foo {
   propA: boolean;
   propB: boolean;
@@ -955,7 +981,8 @@ For example, an instantiation of `T extends U ? X : Y` with the type argument `A
 
 ### Example
 
-```ts
+```ts twoslash
+// @errors: 2304 2304 2304
 type T10 = TypeName<string | (() => void)>; // "string" | "function"
 type T12 = TypeName<string | string[] | undefined>; // "string" | "object" | "undefined"
 type T11 = TypeName<string[] | number[]>; // "object"
@@ -966,7 +993,7 @@ Furthermore, references to `T` within `X` have an additional type parameter cons
 
 ### Example
 
-```ts
+```ts twoslash
 type BoxedValue<T> = { value: T };
 type BoxedArray<T> = { array: T[] };
 type Boxed<T> = T extends any[] ? BoxedArray<T[number]> : BoxedValue<T>;
@@ -980,7 +1007,8 @@ Notice that `T` has the additional constraint `any[]` within the true branch of 
 
 The distributive property of conditional types can conveniently be used to _filter_ union types:
 
-```ts
+```ts twoslash
+// @errors: 2300 2322 2322 2322
 type Diff<T, U> = T extends U ? never : T; // Remove types from T that are assignable to U
 type Filter<T, U> = T extends U ? T : never; // Remove types from T that are not assignable to U
 
@@ -1009,7 +1037,7 @@ function f2<T extends string | undefined>(x: T, y: NonNullable<T>) {
 
 Conditional types are particularly useful when combined with mapped types:
 
-```ts
+```ts twoslash
 type FunctionPropertyNames<T> = {
   [K in keyof T]: T[K] extends Function ? K : never;
 }[keyof T];
@@ -1038,7 +1066,8 @@ For example the following is an error.
 
 ### Example
 
-```ts
+```ts twoslash
+// @errors: 2456 2315
 type ElementType<T> = T extends any[] ? ElementType<T[number]> : T; // Error
 ```
 
@@ -1050,13 +1079,14 @@ It is possible to have multiple `infer` locations for the same type variable.
 
 For example, the following extracts the return type of a function type:
 
-```ts
+```ts twoslash
+// @errors: 2300
 type ReturnType<T> = T extends (...args: any[]) => infer R ? R : any;
 ```
 
 Conditional types can be nested to form a sequence of pattern matches that are evaluated in order:
 
-```ts
+```ts twoslash
 type Unpacked<T> = T extends (infer U)[]
   ? U
   : T extends (...args: any[]) => infer U
@@ -1075,7 +1105,7 @@ type T5 = Unpacked<Unpacked<Promise<string>[]>>; // string
 
 The following example demonstrates how multiple candidates for the same type variable in co-variant positions causes a union type to be inferred:
 
-```ts
+```ts twoslash
 type Foo<T> = T extends { a: infer U; b: infer U } ? U : never;
 type T10 = Foo<{ a: string; b: string }>; // string
 type T11 = Foo<{ a: string; b: number }>; // string | number
@@ -1083,7 +1113,7 @@ type T11 = Foo<{ a: string; b: number }>; // string | number
 
 Likewise, multiple candidates for the same type variable in contra-variant positions causes an intersection type to be inferred:
 
-```ts
+```ts twoslash
 type Bar<T> = T extends { a: (x: infer U) => void; b: (x: infer U) => void }
   ? U
   : never;
@@ -1094,7 +1124,7 @@ type T21 = Bar<{ a: (x: string) => void; b: (x: number) => void }>; // string & 
 When inferring from a type with multiple call signatures (such as the type of an overloaded function), inferences are made from the _last_ signature (which, presumably, is the most permissive catch-all case).
 It is not possible to perform overload resolution based on a list of argument types.
 
-```ts
+```ts twoslash
 declare function foo(x: string): number;
 declare function foo(x: number): string;
 declare function foo(x: string | number): string | number;
@@ -1103,13 +1133,15 @@ type T30 = ReturnType<typeof foo>; // string | number
 
 It is not possible to use `infer` declarations in constraint clauses for regular type parameters:
 
-```ts
+```ts twoslash
+// @errors: 2300 1338 2304
 type ReturnType<T extends (...args: any[]) => infer R> = R; // Error, not supported
 ```
 
 However, much the same effect can be obtained by erasing the type variables in the constraint and instead specifying a conditional type:
 
-```ts
+```ts twoslash
+// @errors: 2300
 type AnyFunction = (...args: any[]) => any;
 type ReturnType<T extends AnyFunction> = T extends (...args: any[]) => infer R
   ? R
@@ -1128,7 +1160,8 @@ TypeScript 2.8 adds several predefined conditional types to `lib.d.ts`:
 
 ### Example
 
-```ts
+```ts twoslash
+// @errors: 2344 2344 2344 2344
 type T00 = Exclude<"a" | "b" | "c" | "d", "a" | "c" | "f">; // "b" | "d"
 type T01 = Extract<"a" | "b" | "c" | "d", "a" | "c" | "f">; // "a" | "c"
 
